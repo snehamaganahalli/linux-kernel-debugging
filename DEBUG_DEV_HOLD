@@ -1,0 +1,28 @@
+
+[  296.484087] unregister_netdevice: waiting for vxlan0 to become free. Usage count = 7
+[  306.744092] unregister_netdevice: waiting for vxlan0 to become free. Usage count = 7
+[  316.774085] unregister_netdevice: waiting for vxlan0 to become free. Usage count = 7
+
+The above code says that we have done the dev_hold(/netdevvxlan0) 7 times and we have not freed it. The linux kernel tries to do the netdev_unregister,
+but it is not successful because of the usage count is 7.
+
+Solution:
+
+do "dev_put(ndetdev/vxlan0)" whenever dev_hold is done.
+
+dev_hold() is done by the kernel whenever we call "dev_get_by_index(dev->ifindex)". In this we have to do "dev_put(dev)" explicitly in our code.
+
+Debug:
+
+dump_stack();
+The above function will dump the current call stack.
+You can add it in the kernel in dev_hold()/dev_put function
+
+Eg:
+dev_hold()
+{
+if(netif_is_vxaln(dev)) //dump the stack if it is vxlan netdevice
+  dump_stack()
+}
+
+Similarly we can do for the dev_put()
